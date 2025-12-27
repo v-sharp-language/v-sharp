@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    startegy:
+    strategy:
       matrix:
         go: [1.25]
     
