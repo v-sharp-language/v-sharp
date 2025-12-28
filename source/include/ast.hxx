@@ -4,6 +4,7 @@
 #include <memory>
 #include <variant>
 #include <string>
+#include <cstdint>
 
 enum class Type
 {
@@ -52,6 +53,8 @@ struct ASTNode
 using ASTNodePtr = std::unique_ptr<ASTNode>;
 using ASTNodeList = std::vector<ASTNodePtr>;
 
+using LiteralValue = std::variant<int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t, float, double, bool, char, std::string>;
+
 struct BlockNode : ASTNode
 {
     ASTNodeList children;
@@ -61,8 +64,8 @@ struct BlockNode : ASTNode
 struct LiteralNode : ASTNode
 {
     Type literalType;
-    std::variant<int8_t, int16_t, int32_t, int64_t, u_int8_t, u_int16_t, u_int32_t, u_int64_t, float, double, bool, char, std::string> value;
-    LiteralNode(Type t, std::variant<int8_t, int16_t, int32_t, int64_t, u_int8_t, u_int16_t, u_int32_t, u_int64_t, float, double, bool, char, std::string> v)
+    LiteralValue value;
+    LiteralNode(Type t, LiteralValue v)
         : ASTNode(ASTNodeType::Literal), literalType(t), value(std::move(v)) {}
 };
 
