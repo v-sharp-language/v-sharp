@@ -1,42 +1,6 @@
 #include <iostream>
 #include "include/parser.hxx"
-
-std::string typeToString(Type t)
-{
-    switch (t)
-    {
-    case Type::Void:
-        return "void";
-    case Type::Bool:
-        return "bool";
-    case Type::Byte:
-        return "byte";
-    case Type::String:
-        return "string";
-    case Type::I8:
-        return "i8";
-    case Type::I16:
-        return "i16";
-    case Type::I32:
-        return "i32";
-    case Type::I64:
-        return "i64";
-    case Type::U8:
-        return "u8";
-    case Type::U16:
-        return "u16";
-    case Type::U32:
-        return "u32";
-    case Type::U64:
-        return "u64";
-    case Type::F32:
-        return "f32";
-    case Type::F64:
-        return "f64";
-    default:
-        return "unknown";
-    }
-}
+#include "include/string.hxx"
 
 void printAST(const ASTNode *node, int indent)
 {
@@ -113,10 +77,10 @@ void printAST(const ASTNode *node, int indent)
     case ASTNodeType::FunctionDecl:
     {
         const FunctionDeclNode *fn = static_cast<const FunctionDeclNode *>(node);
-        std::cout << pad << "FunctionDecl(" << fn->access << " " << fn->name << ") -> " << typeToString(fn->returnType) << "\n";
+        std::cout << pad << "FunctionDecl(" << fn->access << " " << fn->name << ") -> " << fn->returnType << "\n";
         std::cout << pad << "  Params:\n";
         for (auto &p : fn->params)
-            std::cout << pad << "    " << typeToString(p.first) << " " << p.second << "\n";
+            std::cout << pad << "    " << p.first << " " << p.second << "\n";
         std::cout << pad << "  Body:\n";
         printAST(fn->body.get(), indent + 4);
         break;

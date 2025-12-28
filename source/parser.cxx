@@ -1,5 +1,5 @@
-#include "include/parser.hxx"
 #include <stdexcept>
+#include "include/parser.hxx"
 
 void Parser::expect(TokenType type)
 {
@@ -74,7 +74,7 @@ ASTNodePtr Parser::parsePrimary()
     }
     case TokenType::Unsigned:
     {
-        uint64_t value = std::stoul(std::string(current.Lexeme));
+        u_int64_t value = std::stoul(std::string(current.Lexeme));
         ASTNodePtr node = std::make_unique<LiteralNode>(Type::U64, value);
         advance();
         return node;
@@ -175,7 +175,7 @@ ASTNodePtr Parser::parseExpression(int minPrec)
 ASTNodePtr Parser::parseFunction()
 {
     std::vector<std::string> modifiers(3);
-	uint8_t maxModifiers = 0;
+	u_int8_t maxModifiers = 0;
     while (true && maxModifiers < 3)
     {
         

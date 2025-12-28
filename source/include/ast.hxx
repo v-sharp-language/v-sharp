@@ -1,8 +1,8 @@
 #pragma once
+
 #include <vector>
 #include <memory>
 #include <variant>
-#include <cstdint>
 #include <string>
 
 enum class Type
@@ -39,14 +39,8 @@ enum class ASTNodeType
     UnaryExpr,
     Literal,
     Identifier,
-    FunctionCall,
-    ListExpr
+    FunctionCall
 };
-
-struct ASTNode;
-
-using ASTNodePtr = std::unique_ptr<ASTNode>;
-using ASTNodeList = std::vector<ASTNodePtr>;
 
 struct ASTNode
 {
@@ -54,6 +48,9 @@ struct ASTNode
     ASTNode(ASTNodeType t) : type(t) {}
     virtual ~ASTNode() = default;
 };
+
+using ASTNodePtr = std::unique_ptr<ASTNode>;
+using ASTNodeList = std::vector<ASTNodePtr>;
 
 struct BlockNode : ASTNode
 {
@@ -64,8 +61,8 @@ struct BlockNode : ASTNode
 struct LiteralNode : ASTNode
 {
     Type literalType;
-    std::variant<int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t, float, double, bool, char, std::string> value;
-    LiteralNode(Type t, std::variant<int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t, float, double, bool, char, std::string> v)
+    std::variant<int8_t, int16_t, int32_t, int64_t, u_int8_t, u_int16_t, u_int32_t, u_int64_t, float, double, bool, char, std::string> value;
+    LiteralNode(Type t, std::variant<int8_t, int16_t, int32_t, int64_t, u_int8_t, u_int16_t, u_int32_t, u_int64_t, float, double, bool, char, std::string> v)
         : ASTNode(ASTNodeType::Literal), literalType(t), value(std::move(v)) {}
 };
 
@@ -110,4 +107,3 @@ struct ReturnExprNode : ASTNode
 };
 
 void printAST(const ASTNode *node, int indent = 0);
-std::string typeToString(Type t);

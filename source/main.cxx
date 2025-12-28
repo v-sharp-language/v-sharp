@@ -1,8 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "include/token.hxx"
 #include "include/parser.hxx"
-#include "include/ast.hxx"
 
 int main(int argc, char *argv[])
 {

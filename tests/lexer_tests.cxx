@@ -1,10 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <cstdlib>
 #include "../source/include/token.hxx"
 
-// Minimal test helper
 static void fail(size_t i, const std::string &msg)
 {
     std::cerr << "[FAIL] test[" << i << "] " << msg << "\n";
@@ -26,10 +24,6 @@ static void expectToken(size_t i, const Token &tok, TokenType type, const std::s
            "lexeme wrong. expected=\"" + lexeme +
                "\", got=\"" + std::string(tok.Lexeme) + "\"");
 }
-
-// ---------------------------------------------------------
-// Test Cases
-// ---------------------------------------------------------
 
 static void TestLexerBasicToken()
 {

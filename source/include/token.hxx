@@ -2,7 +2,7 @@
 
 #include <string>
 #include <string_view>
-#include <vector>
+#include <unordered_map>
 
 /**
  * @brief Enumeration of all token types in the language.
@@ -122,7 +122,7 @@ struct Keyword
 };
 
 /** @brief List of all keywords in the language */
-inline const std::vector<Keyword> keywords = {
+inline static const std::unordered_map<std::string_view, TokenType> keywords = {
     {"public", TokenType::KwPublic},
     {"private", TokenType::KwPrivate},
     {"virtual", TokenType::KwVirtual},
@@ -184,6 +184,7 @@ struct Lexer
     Token next();
 
     int precedence(TokenType type) const;
+
 private:
     /**
      * @brief Peek at a character in the source code without advancing.
@@ -202,6 +203,11 @@ private:
      * @brief Skip whitespace and update line/column counters.
      */
     void skipWhitespace();
+
+    /**
+     * @brief COnsume a backslash escape sequence if present.
+     */
+    void consumeEscape();
 
     /**
      * @brief Create a token from the source range.
