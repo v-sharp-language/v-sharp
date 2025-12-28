@@ -1,4 +1,4 @@
-#include "include/token.hxx"
+#include "token.hxx"
 
 char Lexer::peek(size_t offset) const
 {

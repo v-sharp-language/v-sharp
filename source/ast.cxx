@@ -1,6 +1,6 @@
 #include <iostream>
-#include "include/parser.hxx"
-#include "include/string.hxx"
+#include "parser.hxx"
+#include "string.hxx"
 
 void printAST(const ASTNode *node, int indent)
 {

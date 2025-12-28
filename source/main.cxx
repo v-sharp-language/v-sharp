@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "include/parser.hxx"
+#include "parser.hxx"
 
 int main(int argc, char *argv[])
 {
