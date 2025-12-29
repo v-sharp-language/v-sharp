@@ -1,15 +1,45 @@
 #include <stdexcept>
 #include <parser.hxx>
+#include <error.hxx>
+
+int Parser::precedence(TokenType type) const
+{
+    switch (type)
+    {
+    case TokenType::Vbar:
+    case TokenType::Colon:
+        return 1;
+    case TokenType::And:
+        return 2;
+    case TokenType::Equal:
+    case TokenType::NotEqual:
+        return 3;
+    case TokenType::LessThan:
+    case TokenType::LessEqual:
+    case TokenType::GreaterThan:
+    case TokenType::GreaterEqual:
+        return 4;
+    case TokenType::Plus:
+    case TokenType::Minus:
+        return 5;
+    case TokenType::Asterisk:
+    case TokenType::Slash:
+    case TokenType::Percent:
+        return 6;
+    default:
+        return 0;
+    }
+}
 
 void Parser::expect(TokenType type)
 {
     if (current.Type != type)
-        throw std::runtime_error("Unexpected token: '" + std::string(current.Lexeme) +
-                                 "' at line " + std::to_string(current.Line));
+        Error::syntax("Unexpected token: '" + std::string(current.Lexeme) + "'", current, Source);
     advance();
 }
 
-ASTNodePtr Parser::parseBody(TokenType endcase, ASTNode* parent, bool shouldAdvance) {
+ASTNodePtr Parser::parseBody(TokenType endcase, ASTNode *parent, bool shouldAdvance)
+{
     ASTNodeList expressions;
     while (current.Type != endcase && current.Type != TokenType::EndOfFile)
     {
@@ -17,67 +47,68 @@ ASTNodePtr Parser::parseBody(TokenType endcase, ASTNode* parent, bool shouldAdva
 
         bool hasAccess = false;
         if (current.Type == TokenType::KwPublic ||
-            current.Type == TokenType::KwPrivate /* ||
-            current.Type == TokenType::KwVirtual ||
-            current.Type == TokenType::KwOverride ||
-            current.Type == TokenType::KwStatic*/
-            )
+            current.Type == TokenType::KwPrivate)
         {
             hasAccess = true;
         }
         else if (current.Type == TokenType::Identifier)
         {
             Token next = peekToken();
-            if (next.Type == TokenType::LeftParen) {
+            if (next.Type == TokenType::LeftParen)
+            {
 
                 node = parseFunction();
-				node.get()->parent = parent;
+                node.get()->parent = parent;
             }
         }
 
-        if (hasAccess) {
+        if (hasAccess)
+        {
             Token next = peekToken();
-            if (next.Type == TokenType::KwClass) {
+            if (next.Type == TokenType::KwClass)
+            {
                 node = parseClassDecl();
             }
-            else {
-                if(next.Type == TokenType::KwVar ||
+            else
+            {
+                if (next.Type == TokenType::KwVar ||
                     next.Type == TokenType::KwConst)
                     node = parseVarDecl(parent);
-				else
+                else
                     node = parseFunction();
             }
             node.get()->parent = parent;
-
         }
-        else if(node.get() == nullptr) {
-            if (current.Type == TokenType::KwClass) {
+        else if (node.get() == nullptr)
+        {
+            if (current.Type == TokenType::KwClass)
+            {
                 node = parseClassDecl();
                 node.get()->parent = parent;
             }
-            else if(current.Type == TokenType::KwVar 
-                || current.Type == TokenType::KwConst
-                )
+            else if (current.Type == TokenType::KwVar || current.Type == TokenType::KwConst)
             {
-				node = parseVarDecl(parent);
+                node = parseVarDecl(parent);
                 node.get()->parent = parent;
             }
-            else {
+            else
+            {
                 Token next = peekToken();
-                 if (next.Type == TokenType::LeftParen) {
+                if (next.Type == TokenType::LeftParen)
+                {
                     node = parseFunction(parent);
-                 }
-                 else if (next.Type == TokenType::KwVar || next.Type == TokenType::KwConst) {
-				    node = parseVarDecl(parent);
-                    }
-                 else {
+                }
+                else if (next.Type == TokenType::KwVar || next.Type == TokenType::KwConst)
+                {
+                    node = parseVarDecl(parent);
+                }
+                else
+                {
                     if (parent == nullptr)
                         node = parseExpression();
-                    else   
+                    else
                         throw std::runtime_error("Unexpected token in class body at line " + std::to_string(current.Line));
-                 }
-
-                
+                }
             }
         }
         expressions.push_back(std::move(node));
@@ -86,8 +117,8 @@ ASTNodePtr Parser::parseBody(TokenType endcase, ASTNode* parent, bool shouldAdva
             advance();
     }
 
-    if(shouldAdvance)
-		advance();
+    if (shouldAdvance)
+        advance();
     auto block = std::make_unique<BlockNode>();
     block->children = std::move(expressions);
     return block;
@@ -109,10 +140,8 @@ ASTNodePtr Parser::parsePrimary()
     case TokenType::KwConst:
         return parseVarDecl();
     case TokenType::KwReturn:
-    {
         advance();
         return std::make_unique<ReturnExprNode>(parseExpression());
-    }
     case TokenType::Integer:
     {
         int64_t value = std::stoi(std::string(current.Lexeme));
@@ -135,12 +164,12 @@ ASTNodePtr Parser::parsePrimary()
     {
         std::string_view lex = current.Lexeme;
         if (lex.size() < 3 || lex.front() != '\'' || lex.back() != '\'')
-            throw std::runtime_error("Invalid byte literal at line " + std::to_string(current.Line));
+            Error::syntax("Invalid byte literal", current, Source);
         char value = lex[1];
         if (value == '\\')
         {
             if (lex.size() < 4)
-                throw std::runtime_error("Invalid escape sequence in byte literal");
+                Error::syntax("Invalid escape sequence in byte literal", current, Source);
             switch (lex[2])
             {
             case 'n':
@@ -171,7 +200,7 @@ ASTNodePtr Parser::parsePrimary()
     }
     case TokenType::String:
     {
-        std::string value = std::string(current.Lexeme);
+        std::string value(current.Lexeme);
         advance();
         return std::make_unique<LiteralNode>(Type::String, value);
     }
@@ -195,7 +224,7 @@ ASTNodePtr Parser::parsePrimary()
         return expr;
     }
     default:
-        throw std::runtime_error("Unexpected token in expression at line " + std::to_string(current.Line));
+        Error::syntax("Unexpected token in expression", current, Source);
     }
 }
 
@@ -235,11 +264,12 @@ ASTNodePtr Parser::parseExpression(int minPrec)
     return left;
 }
 
-ASTNodePtr Parser::parseFunction(ASTNode* parent)
+ASTNodePtr Parser::parseFunction(ASTNode *parent)
 {
 
-	AccessType access = parseAccessModifier();
-    if (access == AccessType::Default && parent != nullptr) {
+    AccessType access = parseAccessModifier();
+    if (access == AccessType::Default && parent != nullptr)
+    {
         access = AccessType::Private;
     }
     else if (access == AccessType::Default && parent == nullptr)
@@ -314,9 +344,8 @@ ASTNodePtr Parser::parseFunction(ASTNode* parent)
         static_cast<BlockNode *>(body.get())->children = std::move(expressions);
     }
 
-
     auto node = std::make_unique<FunctionDeclNode>(modifier, name, params, retType, std::move(body), access);
-	node.get()->parent = parent;
+    node.get()->parent = parent;
     return node;
 }
 
@@ -371,15 +400,16 @@ Type Parser::parseType()
     }
 }
 
-ASTNodePtr Parser::parseVarDecl(ASTNode* parent)
+ASTNodePtr Parser::parseVarDecl(ASTNode *parent)
 {
-	AccessType access = parseAccessModifier();
-    if (access == AccessType::Default && parent != nullptr) {
-		access == AccessType::Private;
-    }
-    else if(access == AccessType::Default && parent == nullptr)
+    AccessType access = parseAccessModifier();
+    if (access == AccessType::Default && parent != nullptr)
     {
-		access = AccessType::Public;
+        access = AccessType::Private;
+    }
+    else if (access == AccessType::Default && parent == nullptr)
+    {
+        access = AccessType::Public;
     }
     ModifierType modifier = parseModifiers();
 
@@ -403,8 +433,8 @@ ASTNodePtr Parser::parseVarDecl(ASTNode* parent)
         advance();
         value = parseExpression();
     }
-    auto node = std::make_unique<VarDeclNode>(isConst, name, varType, std::move(value), modifier);
-	node.get()->parent = parent;
+    auto node = std::make_unique<VarDeclNode>(isConst, name, varType, std::move(value), modifier, access);
+    node.get()->parent = parent;
     return node;
 }
 
@@ -454,19 +484,21 @@ ASTNodePtr Parser::parseIfExpr()
 
 ASTNodePtr Parser::parseClassDecl()
 {
-	auto access = parseAccessModifier();
-    if (access == AccessType::Default) {
-		access = AccessType::Public;
+    auto access = parseAccessModifier();
+    if (access == AccessType::Default)
+    {
+        access = AccessType::Public;
     }
-	expect(TokenType::KwClass);
-    if (current.Type != TokenType::Identifier) {
+    expect(TokenType::KwClass);
+    if (current.Type != TokenType::Identifier)
+    {
         throw std::runtime_error("Expected class name at line " + std::to_string(current.Line));
     }
     std::string name(current.Lexeme);
-    
-	advance();
+
+    advance();
     ASTNodePtr clazz = std::make_unique<ClassDeclNode>(name, access, nullptr);
-    
+
     ASTNodePtr body = std::make_unique<BlockNode>();
     if (current.Type == TokenType::LeftBrace)
     {
@@ -474,29 +506,28 @@ ASTNodePtr Parser::parseClassDecl()
         ASTNodeList expressions;
 
         body = parseBody(TokenType::RightBrace, clazz.get());
-
     }
-    else {
-		throw std::runtime_error("Expected '{' after class name at line " + std::to_string(current.Line));
+    else
+    {
+        throw std::runtime_error("Expected '{' after class name at line " + std::to_string(current.Line));
     }
-	((ClassDeclNode*)clazz.get())->body = std::move(body);
+    ((ClassDeclNode *)clazz.get())->body = std::move(body);
     return clazz;
 }
 
 AccessType Parser::parseAccessModifier()
-{   
+{
     if (current.Type == TokenType::KwPublic)
-    {   
+    {
         advance();
-		return AccessType::Public;
+        return AccessType::Public;
     }
     else if (current.Type == TokenType::KwPrivate)
-    { 
-		advance();
-		return AccessType::Private;
+    {
+        advance();
+        return AccessType::Private;
     }
-	return AccessType::Default;
-    
+    return AccessType::Default;
 }
 
 ModifierType Parser::parseModifiers()
@@ -512,10 +543,11 @@ ModifierType Parser::parseModifiers()
         advance();
         return ModifierType::Static;
     }
-    else if(current.Type == TokenType::KwVirtual) {
+    else if (current.Type == TokenType::KwVirtual)
+    {
         advance();
         return ModifierType::Virtual;
     }
 
-	return ModifierType::None;
+    return ModifierType::None;
 }

@@ -1,5 +1,5 @@
 public class Math {
-    public static const pi: float64 = 3.14 
+    public const pi: float64 = 3.14 
 
     public static add(int64[a, b]) int64 {
         return a + b

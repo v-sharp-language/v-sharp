@@ -2,148 +2,179 @@
 #include <parser.hxx>
 #include <string.hxx>
 
-void printAST(const ASTNode *node, int indent)
+static void indent(std::ostream &os, int n)
 {
-    std::string pad(indent, ' ');
+    os << std::string(n, ' ');
+}
+
+void printAST(const ASTNode *node, int indentLevel)
+{
     if (!node)
         return;
+
+    auto ind = [&](int extra = 0)
+    {
+        indent(std::cout, indentLevel + extra);
+    };
 
     switch (node->type)
     {
     case ASTNodeType::Block:
     {
-        const BlockNode *blk = static_cast<const BlockNode *>(node);
-        std::cout << pad << "Block\n";
+        auto *blk = static_cast<const BlockNode *>(node);
+        ind();
+        std::cout << "Block\n";
         for (const auto &child : blk->children)
-            printAST(child.get(), indent + 2);
+            printAST(child.get(), indentLevel + 2);
         break;
     }
+
     case ASTNodeType::Literal:
     {
-        const LiteralNode *lit = static_cast<const LiteralNode *>(node);
-        std::cout << pad << "Literal(";
-        if (std::holds_alternative<int64_t>(lit->value))
-            std::cout << std::get<int64_t>(lit->value);
-        else if (std::holds_alternative<double>(lit->value))
-            std::cout << std::get<double>(lit->value);
-        else if (std::holds_alternative<bool>(lit->value))
-            std::cout << (std::get<bool>(lit->value) ? "true" : "false");
-        else if (std::holds_alternative<std::string>(lit->value))
-            std::cout << std::get<std::string>(lit->value);
-        else if (std::holds_alternative<char>(lit->value))
-        {
-            char c = std::get<char>(lit->value);
-            std::cout << '\'';
-            switch (c)
+        auto *lit = static_cast<const LiteralNode *>(node);
+        ind();
+        std::cout << "Literal: ";
+
+        std::visit([](const auto &v)
+                   {
+            using T = std::decay_t<decltype(v)>;
+            if constexpr (std::is_same_v<T, bool>)
+                std::cout << (v ? "true" : "false");
+            else if constexpr (std::is_same_v<T, char>)
             {
-            case '\n':
-                std::cout << "\\n";
-                break;
-            case '\t':
-                std::cout << "\\t";
-                break;
-            case '\r':
-                std::cout << "\\r";
-                break;
-            case '\\':
-                std::cout << "\\\\";
-                break;
-            case '\'':
-                std::cout << "\\'";
-                break;
-            default:
-                std::cout << c;
-                break;
+                std::cout << "'";
+                switch (v)
+                {
+                case '\n': std::cout << "\\n"; break;
+                case '\t': std::cout << "\\t"; break;
+                case '\r': std::cout << "\\r"; break;
+                case '\\': std::cout << "\\\\"; break;
+                case '\'': std::cout << "\\'"; break;
+                default:   std::cout << v;
+                }
+                std::cout << "'";
             }
-            std::cout << '\'';
-        }
-        std::cout << ")" << std::endl;
+            else
+                std::cout << v; }, lit->value);
+
+        std::cout << "\n";
         break;
     }
+
     case ASTNodeType::Identifier:
     {
-        const IdentifierNode *id = static_cast<const IdentifierNode *>(node);
-        std::cout << pad << "Identifier(" << id->name << ")" << std::endl;
+        auto *id = static_cast<const IdentifierNode *>(node);
+        ind();
+        std::cout << "Identifier: " << id->name << "\n";
         break;
     }
+
     case ASTNodeType::BinaryExpr:
     {
-        const BinaryExprNode *bin = static_cast<const BinaryExprNode *>(node);
-        std::cout << pad << "BinaryExpr(" << bin->op << ")" << std::endl;
-        printAST(bin->left.get(), indent + 2);
-        printAST(bin->right.get(), indent + 2);
+        auto *bin = static_cast<const BinaryExprNode *>(node);
+        ind();
+        std::cout << "BinaryExpr '" << bin->op << "'\n";
+        printAST(bin->left.get(), indentLevel + 2);
+        printAST(bin->right.get(), indentLevel + 2);
         break;
     }
+
     case ASTNodeType::FunctionDecl:
     {
-        const FunctionDeclNode *fn = static_cast<const FunctionDeclNode *>(node);
-        std::cout << pad << "FunctionDecl(" << fn->access << " " << fn->name << ") -> " << fn->returnType << std::endl;
-        std::cout << pad << "  Params:" << std::endl;
+        auto *fn = static_cast<const FunctionDeclNode *>(node);
+        ind();
+        std::cout << "FunctionDecl " << fn->name
+                  << " [" << fn->access << "] -> "
+                  << fn->returnType << "\n";
+
+        ind(2);
+        std::cout << "Params:\n";
         for (auto &p : fn->params)
-            std::cout << pad << "    " << p.first << " " << p.second << std::endl;
-        std::cout << pad << "  Body:" << std::endl;
-        printAST(fn->body.get(), indent + 4);
+        {
+            ind(4);
+            std::cout << p.first << " " << p.second << "\n";
+        }
+
+        ind(2);
+        std::cout << "Body:\n";
+        printAST(fn->body.get(), indentLevel + 4);
         break;
     }
+
     case ASTNodeType::ReturnExpr:
     {
-        const ReturnExprNode *ret = static_cast<const ReturnExprNode *>(node);
-        std::cout << pad << "ReturnExpr" << std::endl;
-        printAST(ret->expr.get(), indent + 2);
+        auto *ret = static_cast<const ReturnExprNode *>(node);
+        ind();
+        std::cout << "ReturnExpr\n";
+        printAST(ret->expr.get(), indentLevel + 2);
         break;
     }
+
     case ASTNodeType::VarDecl:
     {
-        const VarDeclNode *var = static_cast<const VarDeclNode *>(node);
-        std::cout << pad << (var->isConst ? "ConstDecl" : "VarDecl")
-                  << " " << var->varType << " " << var->name;
+        auto *var = static_cast<const VarDeclNode *>(node);
+        ind();
+        std::cout
+            << (var->isConst ? "ConstDecl " : "VarDecl ")
+            << var->name << " : " << var->varType
+            << " [" << var->access << "]\n";
+
         if (var->value)
         {
-            std::cout << " = ";
-            printAST(var->value.get(), 0);
-        }
-        else
-        {
-            std::cout << std::endl;
+            ind(2);
+            std::cout << "Initializer:\n";
+            printAST(var->value.get(), indentLevel + 4);
         }
         break;
     }
+
     case ASTNodeType::IfExpr:
     {
-        const IfExprNode *ifn = static_cast<const IfExprNode *>(node);
+        auto *ifn = static_cast<const IfExprNode *>(node);
+        ind();
+        std::cout << "IfExpr\n";
 
-        std::cout << pad << "IfExpr" << std::endl;
+        ind(2);
+        std::cout << "Condition:\n";
+        printAST(ifn->condition.get(), indentLevel + 4);
 
-        std::cout << pad << "  Condition:" << std::endl;
-        printAST(ifn->condition.get(), indent + 4);
-
-        std::cout << pad << "  Then:" << std::endl;
-        printAST(ifn->thenBranch.get(), indent + 4);
+        ind(2);
+        std::cout << "Then:\n";
+        printAST(ifn->thenBranch.get(), indentLevel + 4);
 
         if (ifn->elseBranch)
         {
-            std::cout << pad << "  Else:" << std::endl;
-            printAST(ifn->elseBranch.get(), indent + 4);
+            ind(2);
+            std::cout << "Else:\n";
+            printAST(ifn->elseBranch.get(), indentLevel + 4);
         }
-
         break;
     }
+
     case ASTNodeType::AssignExpr:
     {
-        const AssignExprNode *as = static_cast<const AssignExprNode *>(node);
-        std::cout << pad << "AssignExpr(" << as->name << ")" << std::endl;
-        printAST(as->value.get(), indent + 2);
+        auto *as = static_cast<const AssignExprNode *>(node);
+        ind();
+        std::cout << "AssignExpr " << as->name << "\n";
+        printAST(as->value.get(), indentLevel + 2);
         break;
     }
+
     case ASTNodeType::ClassDecl:
     {
-		const ClassDeclNode* cls = static_cast<const ClassDeclNode*>(node);
-        std::cout << pad << "ClassDecl(" << cls->name << ") Access: " << cls->access << std::endl;
-        std::cout << pad << "  Body:" << std::endl;
-        printAST(cls->body.get(), indent + 4);
-		break;
+        auto *cls = static_cast<const ClassDeclNode *>(node);
+        ind();
+        std::cout << "ClassDecl " << cls->name
+                  << " [" << cls->access << "]\n";
+
+        ind(2);
+        std::cout << "Body:\n";
+        printAST(cls->body.get(), indentLevel + 4);
+        break;
     }
+
     default:
-        std::cout << pad << "Unknown AST Node" << std::endl;
+        ind();
+        std::cout << "UnknownNode\n";
     }
 }

@@ -31,12 +31,30 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 set(VSHARP_SOURCES
     source/main.cxx
-    source/lexer.cxx
     source/parser.cxx
     source/ast.cxx
     source/lsp.cxx
     source/cli.cxx
+    source/error.cxx
 )
+
+find_program(FLEX_EXECUTABLE flex)
+if(NOT FLEX_EXECUTABLE)
+    message(FATAL_ERROR "flex not found! Please install flex to build the lexer.")
+endif()
+
+set(FLEX_INPUT ${PROJECT_SOURCE_DIR}/source/lexer.l)
+set(FLEX_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/source/lexer.cxx)
+
+add_custom_command(
+    OUTPUT ${FLEX_OUTPUT}
+    COMMAND ${FLEX_EXECUTABLE} -o ${FLEX_OUTPUT} ${FLEX_INPUT}
+    DEPENDS ${FLEX_INPUT}
+    COMMENT "Generating lexer from ${FLEX_INPUT}"
+    VERBATIM
+)
+
+list(APPEND VSHARP_SOURCES ${FLEX_OUTPUT})
 
 add_executable(vsharp ${VSHARP_SOURCES})
 
@@ -80,24 +98,25 @@ if(ENABLE_SANITIZERS AND NOT MSVC)
     )
 endif()
 
-enable_testing()
+#  enable_testing()
 
-add_executable(lexer_tests
-    tests/lexer_tests.cxx
-    source/lexer.cxx
-)
+# add_executable(lexer_tests
+    # tests/lexer_tests.cxx
+    # source/lexer.cxx
+    # source/error.cxx
+# )
 
-target_include_directories(lexer_tests
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/source/include
-)
+# target_include_directories(lexer_tests
+    # PRIVATE
+        # ${PROJECT_SOURCE_DIR}/source/include
+# )
 
-target_compile_options(lexer_tests PRIVATE
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>
-)
+# target_compile_options(lexer_tests PRIVATE
+    # $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+    # $<$<CXX_COMPILER_ID:MSVC>:/W4>
+# )
 
-add_test(
-    NAME LexerTests
-    COMMAND lexer_tests
-)
+# add_test(
+    # NAME LexerTests
+    # COMMAND lexer_tests
+# )

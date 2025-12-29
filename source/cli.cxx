@@ -6,6 +6,11 @@
 #include <config.hxx>
 #include <parser.hxx>
 
+#include <flex/FlexLexer.h>
+
+extern const std::string *Source;
+extern std::string currentFile;
+
 void printHelp()
 {
     std::cout << "TODO" << std::endl;
@@ -24,19 +29,36 @@ void compileFile(const std::string &filename, const std::vector<std::string> &fl
     }
 
     std::ifstream file(filename, std::ios::binary);
+    if (!file)
+    {
+        std::cerr << "Cannot open file: " << filename << std::endl;
+    }
+
     std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    if (source.empty())
+    {
+        std::cerr << "File is empty: " << filename << std::endl;
+    }
 
-    Lexer lexer(std::move(source), filename);
-    Parser parser(lexer);
+    Source = &source;
+    currentFile = filename;
 
-    try {
+    std::istringstream ss(source);
+    yyFlexLexer lexer(&ss);
+    Parser parser(lexer, source);
+
+    try
+    {
         ASTNodePtr ast = parser.parserProgram();
-        
-        if (std::find(flags.begin(), flags.end(), "--emit-ast") != flags.end()) {
+
+        if (std::find(flags.begin(), flags.end(), "--emit-ast") != flags.end())
+        {
             printAST(ast.get());
         }
-    } catch (const std::exception &e) {
-        std::cerr << "Parser Error: " << e.what() << std::endl;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
         exit(1);
     }
 }

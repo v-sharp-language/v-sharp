@@ -1,20 +1,22 @@
 #pragma once
 
 #include <string_view>
-
+#include <ast.hxx>
+#include <error.hxx>
 
 [[nodiscard]]
-inline constexpr std::string_view toString_Access(AccessType access) {
+inline constexpr std::string_view toString_Access(AccessType access)
+{
     switch (access)
     {
     case AccessType::Default:
-		return "Default";
+        return "Default";
         break;
     case AccessType::Public:
-		return "Public";
+        return "Public";
         break;
     case AccessType::Private:
-		return "Private";
+        return "Private";
         break;
     default:
         return "Unknown";
@@ -23,20 +25,21 @@ inline constexpr std::string_view toString_Access(AccessType access) {
 }
 
 [[nodiscard]]
-inline constexpr std::string_view toString_Modifier(ModifierType mod) {
+inline constexpr std::string_view toString_Modifier(ModifierType mod)
+{
     switch (mod)
     {
     case ModifierType::None:
-		return "None";
+        return "None";
         break;
     case ModifierType::Static:
-		return "Static";
+        return "Static";
         break;
     case ModifierType::Virtual:
-		return "Virtual";
+        return "Virtual";
         break;
     case ModifierType::Override:
-		return "Override";
+        return "Override";
         break;
     default:
         return "Unknown";
@@ -45,7 +48,7 @@ inline constexpr std::string_view toString_Modifier(ModifierType mod) {
 }
 
 [[nodiscard]]
-inline constexpr std::string_view typeToString(Type t) noexcept
+inline constexpr std::string_view toString_Type(Type t) noexcept
 {
     switch (t)
     {
@@ -86,25 +89,40 @@ inline constexpr std::string_view typeToString(Type t) noexcept
 }
 
 [[nodiscard]]
-inline std::string_view keywordToString(const Keyword &kw) noexcept
+inline std::string_view toString_Error(ErrorType type)
 {
-    return kw.name;
+    switch (type)
+    {
+    case ErrorType::Lexical:
+        return "Lexical Error";
+    case ErrorType::Syntax:
+        return "Syntax Error";
+    case ErrorType::Semantic:
+        return "Semantic Error";
+    case ErrorType::TypeError:
+        return "Type Error";
+    default:
+        return "Unknown Error";
+    }
 }
 
 inline std::ostream &operator<<(std::ostream &os, Type t)
 {
-    return os << typeToString(t);
+    return os << toString_Type(t);
 }
 
-inline std::ostream &operator<<(std::ostream &os, const Keyword &kw)
+inline std::ostream &operator<<(std::ostream &os, ErrorType t)
 {
-    return os << kw.name;
+    return os << toString_Error(t);
 }
-inline std::ostream& operator<<(std::ostream& os, const AccessType& ac)
+
+
+inline std::ostream &operator<<(std::ostream &os, const AccessType &ac)
 {
     return os << toString_Access(ac);
 }
-inline std::ostream& operator<<(std::ostream& os, const ModifierType& mod)
+
+inline std::ostream &operator<<(std::ostream &os, const ModifierType &mod)
 {
     return os << toString_Modifier(mod);
 }
