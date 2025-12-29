@@ -70,6 +70,7 @@ target_compile_options(vsharp PRIVATE
         -Wall
         -Wextra
         -Wpedantic
+        -Wno-sign-compare
     >
 )
 
