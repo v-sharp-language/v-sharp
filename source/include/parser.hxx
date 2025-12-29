@@ -3,7 +3,9 @@
 #include <ast.hxx>
 #include <token.hxx>
 #include <flex/FlexLexer.h>
-#include <cstring>
+
+extern std::string currentFile;
+extern size_t column;
 
 struct Parser
 {
@@ -17,6 +19,7 @@ struct Parser
         current = next();
         nextToken = next();
     }
+
     void advance()
     {
         current = nextToken;
@@ -27,16 +30,7 @@ struct Parser
     {
         int tok = lexer.yylex();
         TokenType type = static_cast<TokenType>(tok);
-        const char *start = lexer.YYText();
-        size_t length = lexer.YYLeng();
-
-        ptrdiff_t offset = start - Source.data();
-        if (offset < 0 || static_cast<size_t>(offset) + length > Source.size())
-        {
-            return Token{type, std::string(start, length)};
-        }
-        std::string_view lexeme(Source.data() + offset, length);
-        return Token { type, lexeme };
+        return Token{type, lexer.YYText(), currentFile, static_cast<size_t>(lexer.lineno()), column};
     }
 
     void expect(TokenType type);

@@ -9,8 +9,36 @@ on:
       - main
 
 jobs:
-  noop:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
     steps:
-      - name: Do nothing
-        run: echo "This workflow does nothing."
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$(uname)" == "Darwin" ]; then
+            brew update
+            brew install cmake flex bison
+          else
+            sudo apt-get update
+            sudo apt-get install -y build-essential flex bison
+          fi
+      
+      - name: Set up dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+          Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+          scoop install winflexbison cmake
+
+      - name: Build
+        run: |
+          cmake -S . -B build
+          cmake --build build

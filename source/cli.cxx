@@ -2,14 +2,13 @@
 #include <filesystem>
 #include <fstream>
 #include <algorithm>
-#include <cli.hxx>
+#include <sstream>
 #include <config.hxx>
 #include <parser.hxx>
 
 #include <flex/FlexLexer.h>
 
 extern const std::string *Source;
-extern std::string currentFile;
 
 void printHelp()
 {

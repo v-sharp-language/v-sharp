@@ -2,11 +2,7 @@
 #include <string.hxx>
 #include <error.hxx>
 
-static void printSourceLine(
-    std::ostream &os,
-    std::string_view source,
-    size_t errorLine,
-    size_t errorColumn)
+static void printSourceLine(std::ostream &os, std::string_view source, size_t errorLine, size_t errorColumn, size_t tokenLength)
 {
     size_t line = 1;
     size_t start = 0;
@@ -30,7 +26,11 @@ static void printSourceLine(
 
     os << "  " << errorLine << " | " << lineText << '\n';
     os << "    | ";
-    for (size_t i = 1; i < errorColumn; ++i)
+
+    size_t caretPos = errorColumn;
+    if (caretPos > 0 && tokenLength > 0)
+        caretPos -= 1;
+    for (size_t i = 0; i < caretPos; ++i)
         os << ' ';
     os << "^" << '\n';
 }
@@ -43,7 +43,7 @@ void Error::report(const CompileError &err, std::string_view source)
               << err.type << ": "
               << err.message << std::endl;
 
-    printSourceLine(std::cerr, source, err.token.Line, err.token.Column);
+    printSourceLine(std::cerr, source, err.token.Line, err.token.Column, err.token.Lexeme.size());
     std::exit(EXIT_FAILURE);
 }
 

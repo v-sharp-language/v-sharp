@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-#include <string_view>
 #include <unordered_map>
 
 /**
@@ -106,10 +104,10 @@ enum class TokenType
  */
 struct Token
 {
-    TokenType Type;          /**< Type of the token */
-    std::string_view Lexeme; /**< Raw text of the token */
-    std::string File;        /**< Source file name */
-    size_t Line, Column;     /**< Line and column of the token in the source */
+    TokenType Type;      /**< Type of the token */
+    std::string Lexeme;  /**< Raw text of the token */
+    std::string File;    /**< Source file name */
+    size_t Line, Column; /**< Line and column of the token in the source */
 };
 
 /** @brief List of all keywords in the language */

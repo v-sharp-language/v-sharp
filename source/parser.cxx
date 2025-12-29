@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <parser.hxx>
+#include <string.hxx>
 #include <error.hxx>
 
 int Parser::precedence(TokenType type) const
@@ -34,7 +35,8 @@ int Parser::precedence(TokenType type) const
 void Parser::expect(TokenType type)
 {
     if (current.Type != type)
-        Error::syntax("Unexpected token: '" + std::string(current.Lexeme) + "'", current, Source);
+        Error::syntax(
+            "Expected '" + std::string(toString_Token(type)) + ", got '" + std::string(current.Lexeme) + "'", current, Source);
     advance();
 }
 
@@ -168,8 +170,6 @@ ASTNodePtr Parser::parsePrimary()
         char value = lex[1];
         if (value == '\\')
         {
-            if (lex.size() < 4)
-                Error::syntax("Invalid escape sequence in byte literal", current, Source);
             switch (lex[2])
             {
             case 'n':

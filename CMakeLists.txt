@@ -38,29 +38,26 @@ set(VSHARP_SOURCES
     source/error.cxx
 )
 
-find_program(FLEX_EXECUTABLE flex)
-if(NOT FLEX_EXECUTABLE)
-    message(FATAL_ERROR "flex not found! Please install flex to build the lexer.")
-endif()
+find_package(FLEX REQUIRED)
 
 set(FLEX_INPUT ${PROJECT_SOURCE_DIR}/source/lexer.l)
 set(FLEX_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/source/lexer.cxx)
+set(FLEX_HEADER ${CMAKE_CURRENT_BINARY_DIR}/source/include/lexer.hxx)
 
-add_custom_command(
-    OUTPUT ${FLEX_OUTPUT}
-    COMMAND ${FLEX_EXECUTABLE} -o ${FLEX_OUTPUT} ${FLEX_INPUT}
-    DEPENDS ${FLEX_INPUT}
-    COMMENT "Generating lexer from ${FLEX_INPUT}"
-    VERBATIM
-)
+flex_target(
+    VSHARP_LEXER 
+    ${FLEX_INPUT} 
+    ${FLEX_OUTPUT} 
+    COMPILE_FLAGS "--nounistd --header-file=${FLEX_HEADER}")
 
-list(APPEND VSHARP_SOURCES ${FLEX_OUTPUT})
+list(APPEND VSHARP_SOURCES ${FLEX_VSHARP_LEXER_OUTPUTS})
 
 add_executable(vsharp ${VSHARP_SOURCES})
 
 target_include_directories(vsharp
     PRIVATE
         ${PROJECT_SOURCE_DIR}/source/include
+        ${PROJECT_SOURCE_DIR}/source/include/flex
         ${CMAKE_CURRENT_BINARY_DIR}/source/include
 )
 
