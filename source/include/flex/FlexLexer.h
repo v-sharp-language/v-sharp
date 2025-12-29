@@ -50,6 +50,12 @@
 
 #include <iostream>
 
+#ifdef __APPLE__
+#define YYLEXER_SIZE_TYPE size_t
+#else
+#define YYLEXER_SIZE_TYPE int
+#endif
+
 extern "C++" {
 
 struct yy_buffer_state;
@@ -145,8 +151,8 @@ public:
   virtual int yywrap();
 
 protected:
-  virtual int LexerInput( char* buf, int max_size );
-  virtual void LexerOutput( const char* buf, int size );
+  virtual int LexerInput( char* buf, YYLEXER_SIZE_TYPE max_size );
+  virtual void LexerOutput( const char* buf, YYLEXER_SIZE_TYPE size );
   virtual void LexerError( const char* msg );
 
   void yyunput( int c, char* buf_ptr );
