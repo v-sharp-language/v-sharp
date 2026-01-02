@@ -20,13 +20,13 @@ func (lexer *Lexer) error(msg string) {
 	)
 }
 
-func (lexer *Lexer) getLineText(lineNum int) string {
+func (l *Lexer) getLineText(lineNum int) string {
 	if lineNum < 1 {
 		return ""
 	}
-	start := 0
 	currentLine := 1
-	for i, r := range lexer.source {
+	start := 0
+	for i, r := range l.source {
 		if currentLine == lineNum {
 			start = i
 			break
@@ -35,14 +35,11 @@ func (lexer *Lexer) getLineText(lineNum int) string {
 			currentLine++
 		}
 	}
-	end := len(lexer.source)
-	for i := start; i < len(lexer.source); i++ {
-		if lexer.source[i] == '\n' {
-			end = i
-			break
-		}
+	end := start
+	for end < len(l.source) && l.source[end] != '\n' {
+		end++
 	}
-	return string(lexer.source[start:end])
+	return string(l.source[start:end])
 }
 
 func makeCaret(col int) string {

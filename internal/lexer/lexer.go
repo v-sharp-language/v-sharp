@@ -3,6 +3,7 @@ package lexer
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"unicode"
 )
 
@@ -78,29 +79,25 @@ func (lexer *Lexer) Next() Token {
 	switch char {
 	case '=':
 		lexer.advanceRune()
-		if lexer.peekRuneAt(0) == '=' {
-			lexer.advanceRune()
+		if lexer.match('=') {
 			return lexer.makeToken(Equal, "==", startLine, startColumn)
 		}
 		return lexer.makeToken(Assign, "=", startLine, startColumn)
 	case '!':
 		lexer.advanceRune()
-		if lexer.peekRuneAt(0) == '=' {
-			lexer.advanceRune()
+		if lexer.match('=') {
 			return lexer.makeToken(NotEqual, "!=", startLine, startColumn)
 		}
 		return lexer.makeToken(Not, "!", startLine, startColumn)
 	case '<':
 		lexer.advanceRune()
-		if lexer.peekRuneAt(0) == '=' {
-			lexer.advanceRune()
+		if lexer.match('=') {
 			return lexer.makeToken(LessEqual, "<=", startLine, startColumn)
 		}
 		return lexer.makeToken(LessThan, "<", startLine, startColumn)
 	case '>':
 		lexer.advanceRune()
-		if lexer.peekRuneAt(0) == '=' {
-			lexer.advanceRune()
+		if lexer.match('=') {
 			return lexer.makeToken(GreaterEqual, ">=", startLine, startColumn)
 		}
 		return lexer.makeToken(GreaterThan, ">", startLine, startColumn)
@@ -151,15 +148,13 @@ func (lexer *Lexer) Next() Token {
 		return lexer.makeToken(Semicolon, ";", startLine, startColumn)
 	case '&':
 		lexer.advanceRune()
-		if lexer.peekRuneAt(0) == '&' {
-			lexer.advanceRune()
+		if lexer.match('&') {
 			return lexer.makeToken(And, "&&", startLine, startColumn)
 		}
 		return lexer.makeToken(Illegal, "&", startLine, startColumn)
 	case '|':
 		lexer.advanceRune()
-		if lexer.peekRuneAt(0) == '|' {
-			lexer.advanceRune()
+		if lexer.match('|') {
 			return lexer.makeToken(Or, "||", startLine, startColumn)
 		}
 		return lexer.makeToken(Vbar, "|", startLine, startColumn)
@@ -215,37 +210,40 @@ func (lexer *Lexer) scanIdentifier() string {
 	return string(lexer.source[start:lexer.position])
 }
 
-func (lexer *Lexer) scanNumberLiteral() (string, TokenType) {
-	start := lexer.position
+func (l *Lexer) scanNumberLiteral() (string, TokenType) {
+	start := l.position
 	isFloat := false
+
 	for {
-		ch := lexer.peekRuneAt(0)
+		ch := l.peekRuneAt(0)
 		if ch == '.' {
-			if lexer.peekRuneAt(1) == '.' {
+			if l.peekRuneAt(1) == '.' {
 				break
 			}
 			isFloat = true
-			lexer.advanceRune()
+			l.advanceRune()
 			continue
 		}
 		if !unicode.IsDigit(ch) && ch != '_' {
 			break
 		}
-		lexer.advanceRune()
+		l.advanceRune()
 	}
-	lex := string(lexer.source[start:lexer.position])
+
+	lex := string(l.source[start:l.position])
 	clean := StripNumericSeparators(lex)
-	if isFloat {
+
+	if isFloat || strings.Contains(clean, ".") {
 		if _, err := strconv.ParseFloat(clean, 64); err == nil {
 			return lex, Float
 		}
-	}
-	if _, err := strconv.ParseInt(clean, 10, 64); err == nil {
+	} else if _, err := strconv.ParseInt(clean, 10, 64); err == nil {
 		return lex, Integer
-	}
-	if _, err := strconv.ParseFloat(clean, 64); err == nil {
+	} else if _, err := strconv.ParseFloat(clean, 64); err == nil {
 		return lex, Float
 	}
+
+	l.error("invalid numeric literal")
 	return lex, Illegal
 }
 

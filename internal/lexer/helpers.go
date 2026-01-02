@@ -40,3 +40,11 @@ func isIdentifierPart(r rune) bool {
 func (t Token) String() string {
 	return fmt.Sprintf("%d('%s') at %d:%d", t.Type, t.Lexeme, t.Line, t.Column)
 }
+
+func (l *Lexer) match(next rune) bool {
+	if l.peekRuneAt(0) == next {
+		l.advanceRune()
+		return true
+	}
+	return false
+}
