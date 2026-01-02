@@ -9,7 +9,7 @@ func TestFullVersionContainsFields(t *testing.T) {
 	out := FullVersion()
 
 	expected := []string{
-		"VSharp Version:",
+		"Version:",
 		"Commit:",
 		"Build Time:",
 		"Go Version:",
@@ -52,8 +52,8 @@ func TestFullVersionFormatting(t *testing.T) {
 		t.Fatalf("expected 5 lines, got %d:\n%s", len(lines), out)
 	}
 
-	if !strings.HasPrefix(lines[0], "VSharp Version:") {
-		t.Fatal("line 1 should begin with 'VSharp Version:'")
+	if !strings.HasPrefix(lines[0], "Version:") {
+		t.Fatal("line 1 should begin with 'Version:'")
 	}
 	if !strings.HasPrefix(lines[4], "Platform:") {
 		t.Fatal("last line should begin with 'Platform:'")
