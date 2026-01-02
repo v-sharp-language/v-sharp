@@ -16,7 +16,7 @@ var (
 
 func FullVersion() string {
 	return fmt.Sprintf(
-		"VSharp Version: %s\nCommit: %s\nBuild Time: %s\nGo Version: %s\nPlatform: %s/%s",
+		"Version: %s\nCommit: %s\nBuild Time: %s\nGo Version: %s\nPlatform: %s/%s",
 		Version, GitCommit, BuildTime, GoVersion, OS, Arch,
 	)
 }
