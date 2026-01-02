@@ -11,4 +11,4 @@ typedef uint64 u64
 typedef boolean bool
 
 define enumeration enum
-define structure struct
+define structure struct~

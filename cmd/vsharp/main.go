@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"vsharp/internal/version"
+	"os"
+	"vsharp/pkg/vsharp"
 )
 
 func main() {
-	fmt.Println(version.FullVersion())
+	vsharp.RunCLI(os.Args)
 }
